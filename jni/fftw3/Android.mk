@@ -1,0 +1,7 @@
+# FourierTest/jni/fftw3/Android.mk
+LOCAL_PATH := $(TOP_LOCAL_PATH)/fftw3
+include $(CLEAR_VARS)
+LOCAL_MODULE := fftw3
+LOCAL_SRC_FILES := lib/libfftw3.a
+LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/include
+include $(PREBUILT_STATIC_LIBRARY)
