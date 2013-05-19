@@ -24,9 +24,7 @@ import android.view.View.OnClickListener;
 
 public class Newfourier extends Activity implements OnClickListener {
 
-	static {
-		System.loadLibrary("Fourierwin");
-	}
+	
 	private static int buffersize;
 	private static int count = 0;
 	public static AudioRecord AT;
@@ -87,7 +85,7 @@ public class Newfourier extends Activity implements OnClickListener {
 		
 	}
 
-	public native char[] fprocess(double[] k);
+	
 
 	@Override
 	public void onClick(View v) {
