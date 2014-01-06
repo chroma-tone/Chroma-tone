@@ -1,5 +1,5 @@
 package com.audiologic.Fourierwin;
-
+/*
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.DataOutputStream;
@@ -116,7 +116,7 @@ public class Newfourier extends Activity implements OnClickListener {
 			// audioSource, sampleRateInHz, channelConfig, audioFormat,
 			// bufferSizeInBytes
 			AT = new AudioRecord(AudioSource.MIC, rates[i],
-					AudioFormat.CHANNEL_IN_STEREO,
+					AudioFormat.CHANNEL_IN_MONO,
 					AudioFormat.ENCODING_PCM_16BIT, buffersize);
 
 			Log.i(AUDIO_SERVICE, "\n" + String.valueOf((AT.getState())));
@@ -126,12 +126,12 @@ public class Newfourier extends Activity implements OnClickListener {
 			tracklistener tracklisteneri = new tracklistener();
 			AT.setRecordPositionUpdateListener(tracklisteneri);
 
-			/*
+			
 			 * short[] audioData = new short[buffersize];
 			 * 
 			 * 
 			 * AT.read(audioData, 0, buffersize);
-			 */
+			 
 
 			int audioRecordState = AT.getState();
 			if (audioRecordState != AudioRecord.STATE_INITIALIZED) {
@@ -142,15 +142,15 @@ public class Newfourier extends Activity implements OnClickListener {
 			while(true)
 			{
 				tracklisteneri.onPeriodicNotification(AT);
-				Thread.sleep((int) c * rates[i]);
+				Thread.sleep(100000);//(int) c * rates[i]);
 			}
 
 		} catch (Exception e) {
 			System.err
-					.println("--------------------------------------------------------");
-			e.printStackTrace();
-			System.err
-					.println("--------------------------------------------------------");
+			.println("--------------------------------------------------------");
+	e.printStackTrace();
+	System.err
+			.println("--------------------------------------------------------");
 		}
 	}
 
@@ -165,14 +165,30 @@ public class Newfourier extends Activity implements OnClickListener {
 		    }
 		    String[] pi = new String[audioData.length];
 		        int samplesRead =  AT.read(audioData, 0, audioData.length);
-			double[] transformed = new double[audioData.length];
-			for (int j = 0; j < audioData.length; j++) {
-				transformed[j] = (double) audioData[j];
-				Log.i(AUDIO_SERVICE, String.valueOf(transformed[j]) + ",");
-			}
+			double[] transformed = new double[audioData.length*2];
 			
-			 //char[] t = fprocess(transformed);
-
+			
+			for (int i = 0; i < audioData.length; i++) {
+				transformed[i * 2] = audioData[i];
+				transformed[i * 2 + 1] = 0;
+			}
+			try{
+			PitchDetect pt = new PitchDetect();
+			 pt.fprocess(transformed,transformed.length/2);
+			 for (int i = 0; i < transformed.length; i++) {
+				 
+			 }
+			}
+			 catch (Exception e)
+			 {
+				 
+				 System.err
+					.println("--------------------------------------------------------");
+			e.printStackTrace();
+			System.err
+					.println("--------------------------------------------------------");
+			 }
+			 
 		}
 
 		@Override
@@ -180,4 +196,61 @@ public class Newfourier extends Activity implements OnClickListener {
 		}
 	}
 
+}*/
+
+
+
+/** Copyright (C) 2009 by Aleksey Surkov.
+ **
+ ** Permission to use, copy, modify, and distribute this software and its
+ ** documentation for any purpose and without fee is hereby granted, provided
+ ** that the above copyright notice appear in all copies and that both that
+ ** copyright notice and this permission notice appear in supporting
+ ** documentation.  This software is provided "as is" without express or
+ ** implied warranty.
+ */      
+
+
+
+import java.lang.Thread;
+import java.util.HashMap;
+
+import com.audiologic.Fourierwin.DrawableView;
+import com.audiologic.Fourierwin.PitchDetect;
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.os.Handler;
+
+public class Newfourier extends Activity {
+	/** Called when the activity is first created. */
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		tv_ = new DrawableView(this);
+		setContentView(tv_);
+	}
+
+	@Override
+	public void onStart() {
+		super.onStart();
+		pitch_detector_thread_ = new Thread(new PitchDetect(this, new Handler()));
+		pitch_detector_thread_.start();
+	}
+
+	@Override
+	public void onStop() {
+		super.onStop();
+		pitch_detector_thread_.interrupt();
+	}
+
+	
+	public void ShowPitchDetectionResult(
+			final HashMap<Double, Double> frequencies,
+			final double pitch) {
+		tv_.setDetectionResults(frequencies, pitch);
+	}
+
+	DrawableView tv_;
+	Thread pitch_detector_thread_;
 }

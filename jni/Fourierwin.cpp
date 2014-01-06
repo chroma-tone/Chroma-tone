@@ -200,7 +200,7 @@ int jniRegisterNativeMethods(JNIEnv* env, const char* className,
 }
 
 static JNINativeMethod gMethods[] = {
-    {"DoFFT", "([DI)V", (void *)Java_com_audiologic_Fourierwin_Newfourier_fprocess},
+    {"fprocess", "([DI)V", (void *)Java_com_audiologic_Fourierwin_PitchDetect_fprocess},
 };
 
 jint JNI_OnLoad(JavaVM* vm, void* reserved)
@@ -216,7 +216,7 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
     return JNI_VERSION_1_4;
 }
 
-void Java_com_audiologic_Fourierwin_Newfourier_fprocess(
+void Java_com_audiologic_Fourierwin_PitchDetect_fprocess(
             JNIEnv* env,
 	        jobject thiz,
             jdoubleArray data,
