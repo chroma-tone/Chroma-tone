@@ -217,10 +217,13 @@ import java.util.HashMap;
 
 import com.audiologic.Fourierwin.DrawableView;
 import com.audiologic.Fourierwin.PitchDetect;
+import com.audiologic.Fourierwin.R.layout;
 
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
+import android.widget.Button;
+import android.widget.TextView;
 
 public class Newfourier extends Activity {
 	/** Called when the activity is first created. */
@@ -228,8 +231,13 @@ public class Newfourier extends Activity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		tv_ = new DrawableView(this);
-		setContentView(tv_);
+		setContentView(R.layout.activity_newfourier);
+		Button button = (Button) findViewById(R.id.button1);
+		button.setText("get Pitch");
+		
 	}
+
+	
 
 	@Override
 	public void onStart() {
@@ -249,6 +257,12 @@ public class Newfourier extends Activity {
 			final HashMap<Double, Double> frequencies,
 			final double pitch) {
 		tv_.setDetectionResults(frequencies, pitch);
+	}
+	
+	public void setPitch(String fg)
+	{
+		TextView tv= (TextView) findViewById(R.id.textView1);
+		tv.setText(fg);
 	}
 
 	DrawableView tv_;
