@@ -13,6 +13,9 @@ package com.audiologic.Fourierwin;
 
 
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.lang.Runnable;
 import java.lang.Thread;
 import java.util.HashMap;
@@ -22,14 +25,16 @@ import com.audiologic.Fourierwin.Newfourier;
 import android.app.AlertDialog;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
+import android.media.MediaRecorder;
 import android.media.MediaRecorder.AudioSource;
+import android.os.Environment;
 import android.os.Handler;
 
 public class PitchDetect implements Runnable {
 	// Currently, only this combination of rate, encoding and channel mode
 	// actually works.
 	private final static int RATE = 8000;
-	private final static int CHANNEL_MODE = AudioFormat.CHANNEL_CONFIGURATION_MONO;
+	private final static int CHANNEL_MODE = AudioFormat.CHANNEL_IN_MONO;
 	private final static int ENCODING = AudioFormat.ENCODING_PCM_16BIT;
 
 	private final static int BUFFER_SIZE_IN_MS = 3000;
@@ -63,8 +68,15 @@ public class PitchDetect implements Runnable {
 			ShowError("Can't initialize AudioRecord");
 			return;
 		}
+
+		
+
+		
+		
+		
 		short[] audio_data = new short[BUFFER_SIZE_IN_BYTES / 2];
 		double[] data = new double[CHUNK_SIZE_IN_SAMPLES * 2];
+		byte[] bytedata = new byte[CHUNK_SIZE_IN_SAMPLES * 2];
 		final int min_frequency_fft = Math.round(MIN_FREQUENCY
 				* CHUNK_SIZE_IN_SAMPLES / RATE);
 		final int max_frequency_fft = Math.round(MAX_FREQUENCY
@@ -76,7 +88,23 @@ public class PitchDetect implements Runnable {
 			for (int i = 0; i < CHUNK_SIZE_IN_SAMPLES; i++) {
 				data[i * 2] = audio_data[i];
 				data[i * 2 + 1] = 0;
+				bytedata[i] = (byte)(audio_data[i] & 0xff);
+				bytedata[i +1] = (byte)((audio_data[i] >> 8) & 0xff);
 			}
+			try {
+				File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath()+"/rec");
+				dir.mkdirs();
+				FileOutputStream os = new FileOutputStream(new File(dir,"8k16bitMono.wav"));
+				byte[] bytes = new byte[BUFFER_SIZE_IN_BYTES];
+
+				os.write(bytedata, 0, CHUNK_SIZE_IN_SAMPLES );
+				os.close();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			
 			fprocess(data, CHUNK_SIZE_IN_SAMPLES);
 			double best_frequency = min_frequency_fft;
 			double best_amplitude = 0;
