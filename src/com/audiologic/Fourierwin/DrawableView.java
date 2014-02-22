@@ -21,7 +21,7 @@ public class DrawableView extends View {
 		
 		 NotePitches = new Double[30];
 		 NoteNames = new String[12];
-		 Map<Double,String> NotePicthesMap = new HashMap<Double,String>();
+		 NotePitchesMap = new HashMap<Double,String>();
 		
 		NotePitches[0] = 82.41;
 		NotePitches[1] = 87.31;
