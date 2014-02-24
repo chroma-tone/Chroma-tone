@@ -29,27 +29,29 @@ import android.media.MediaRecorder;
 import android.media.MediaRecorder.AudioSource;
 import android.os.Environment;
 import android.os.Handler;
+import android.util.Log;
 
 public class PitchDetect implements Runnable {
 	// Currently, only this combination of rate, encoding and channel mode
 	// actually works.
-	private final static int RATE = 8000;
-	private final static int CHANNEL_MODE = AudioFormat.CHANNEL_IN_MONO;
+	private int RATE = 8000;
+	private final static int CHANNEL_MODE = AudioFormat.CHANNEL_IN_STEREO;
 	private final static int ENCODING = AudioFormat.ENCODING_PCM_16BIT;
+	private int[] rates = new int[] { 44100, 22050, 16000, 11025, 8000 };
 
-	private final static int BUFFER_SIZE_IN_MS = 3000;
-	private final static int CHUNK_SIZE_IN_SAMPLES = 4096; // = 2 ^
-															// CHUNK_SIZE_IN_SAMPLES_POW2
-	private final static int CHUNK_SIZE_IN_MS = 1000 * CHUNK_SIZE_IN_SAMPLES
-			/ RATE;
-	private final static int BUFFER_SIZE_IN_BYTES = RATE * BUFFER_SIZE_IN_MS
+	private int CHUNK_SIZE_IN_SAMPLES = 4096;
+	
+	private  int CHUNK_SIZE_IN_MS = 1000 * CHUNK_SIZE_IN_SAMPLES
+			/ RATE; 
+	
+	private  int BUFFER_SIZE_IN_BYTES = -1;
+	private int CHUNK_SIZE_IN_BYTES = RATE * CHUNK_SIZE_IN_MS
 			/ 1000 * 2;
-	private final static int CHUNK_SIZE_IN_BYTES = RATE * CHUNK_SIZE_IN_MS
-			/ 1000 * 2;
-	private final static int MIN_FREQUENCY = 50; // HZ
-	private final static int MAX_FREQUENCY = 600; // HZ - it's for guitar,
+	private int MIN_FREQUENCY = 50; // HZ
+	private int MAX_FREQUENCY = 600; // HZ - it's for guitar,
 													// should be enough
-	private final static int DRAW_FREQUENCY_STEP = 5;
+	private int DRAW_FREQUENCY_STEP = 5;
+	private static final String AUDIO_SERVICE = "Fourier Applicaton";
 
 	public native void fprocess(double[] data, int size);  // an NDK library 'fft-jni'
 	
@@ -62,8 +64,16 @@ public class PitchDetect implements Runnable {
 	public void run() {
 		android.os.Process
 				.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
+		
+		
+		
+		
+		SelectSamplingFrequency();
+		
+		
+		
 		recorder_ = new AudioRecord(AudioSource.MIC, RATE, CHANNEL_MODE,
-				ENCODING, 6144);
+				ENCODING, BUFFER_SIZE_IN_BYTES);
 		if (recorder_.getState() != AudioRecord.STATE_INITIALIZED) {
 			ShowError("Can't initialize AudioRecord");
 			return;
@@ -83,28 +93,12 @@ public class PitchDetect implements Runnable {
 				* CHUNK_SIZE_IN_SAMPLES / RATE);
 		while (!Thread.interrupted()) {
 			recorder_.startRecording();
-			recorder_.read(audio_data, 0, CHUNK_SIZE_IN_BYTES / 2);
+			recorder_.read(audio_data, 0, BUFFER_SIZE_IN_BYTES / 2);
 			recorder_.stop();
-			for (int i = 0; i < CHUNK_SIZE_IN_SAMPLES; i++) {
-				data[i * 2] = audio_data[i];
-				data[i * 2 + 1] = 0;
-				bytedata[i] = (byte)(audio_data[i] & 0xff);
-				bytedata[i +1] = (byte)((audio_data[i] >> 8) & 0xff);
+			for (int i = 0; i < BUFFER_SIZE_IN_BYTES ; i++) {
+				data[i*2] = new Short(audio_data[i]).doubleValue();
+				data[i*2+1] = 0.0;
 			}
-			try {
-				File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath()+"/rec");
-				dir.mkdirs();
-				FileOutputStream os = new FileOutputStream(new File(dir,"8k16bitMono.wav"));
-				byte[] bytes = new byte[BUFFER_SIZE_IN_BYTES];
-
-				os.write(bytedata, 0, CHUNK_SIZE_IN_SAMPLES );
-				os.close();
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
-			
 			fprocess(data, CHUNK_SIZE_IN_SAMPLES);
 			double best_frequency = min_frequency_fft;
 			double best_amplitude = 0;
@@ -136,6 +130,35 @@ public class PitchDetect implements Runnable {
 			}
  			PostToUI(frequencies, best_frequency);
 		}
+	}
+	
+	private void SelectSamplingFrequency()
+	{
+		
+		
+
+		// add the rates you wish to check against
+		int i = 0;
+		while (BUFFER_SIZE_IN_BYTES < 0 && i < rates.length) {
+			// buffer size is valid, Sample rate supported
+
+			BUFFER_SIZE_IN_BYTES = AudioRecord.getMinBufferSize(rates[i], CHANNEL_MODE, ENCODING );
+
+		}
+		RATE = rates[i];
+		CHUNK_SIZE_IN_SAMPLES = (int) Math.round(RATE * 0.8);
+		
+		CHUNK_SIZE_IN_MS = CHUNK_SIZE_IN_SAMPLES * 1000 /RATE;
+		CHUNK_SIZE_IN_BYTES = RATE * CHUNK_SIZE_IN_MS/ 1000 * 2;
+		
+
+		Log.i(AUDIO_SERVICE,
+				"buffersize will be :" + String.valueOf(BUFFER_SIZE_IN_BYTES)
+						+ "\n sample rate is " + String.valueOf(RATE));
+		
+		
+		
+		
 	}
 
 	private void PostToUI(
