@@ -135,8 +135,8 @@ void DoFFTInternal(jdouble* data, jint nn) {
 	j=1;
 	for (i=1; i<n; i+=2) {
 		if (j>i) {
-			swap(data[j-1], data[i-1]);
 			swap(data[j], data[i]);
+			swap(data[j+1], data[i+1]);
 		}
 		m = nn;
 		while (m>=2 && j>m) {
@@ -160,14 +160,14 @@ void DoFFTInternal(jdouble* data, jint nn) {
 		for (m=1; m < mmax; m += 2) {
 			for (i=m; i <= n; i += istep) {
 				j=i+mmax;
-				tempr = wr*data[j-1] - wi*data[j];
-				tempi = wr * data[j] + wi*data[j-1];
+				tempr = wr*data[j] - wi*data[j+1];
+				tempi = wr * data[j+1] + wi*data[j];
 
 
-				data[j-1] = data[i-1] - tempr;
-				data[j] = data[i] - tempi;
-				data[i-1] += tempr;
-				data[i] += tempi;
+				data[j] = data[i] - tempr;
+				data[j+1] = data[i+1] - tempi;
+				data[i] += tempr;
+				data[i+1] += tempi;
 			}
 			wtemp=wr;
 			wr += wr*wpr - wi*wpi;
