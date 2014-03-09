@@ -74,7 +74,7 @@ public class PitchDetect implements Runnable {
 			return;
 		}
 		short[] audio_data = new short[BUFFER_SIZE_IN_BYTES / 2];
-		double[] data = new double[CHUNK_SIZE_IN_SAMPLES * 2];
+		double[] data = new double[BUFFER_SIZE_IN_BYTES];
 		final int min_frequency_fft = Math.round(MIN_FREQUENCY
 				* CHUNK_SIZE_IN_SAMPLES / RATE);
 		final int max_frequency_fft = Math.round(MAX_FREQUENCY
