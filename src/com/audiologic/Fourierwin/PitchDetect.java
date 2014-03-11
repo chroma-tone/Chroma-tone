@@ -13,6 +13,9 @@ package com.audiologic.Fourierwin;
 
 
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.lang.Runnable;
 import java.lang.Thread;
 import java.util.HashMap;
@@ -22,7 +25,9 @@ import com.audiologic.Fourierwin.Newfourier;
 import android.app.AlertDialog;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
+import android.media.MediaRecorder;
 import android.media.MediaRecorder.AudioSource;
+import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
 
@@ -60,34 +65,30 @@ public class PitchDetect implements Runnable {
 		android.os.Process
 				.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
 		
-		
-		
-		
 		SelectSamplingFrequency();
-		
-		
-		
 		recorder_ = new AudioRecord(AudioSource.MIC, RATE, CHANNEL_MODE,
 				ENCODING, BUFFER_SIZE_IN_BYTES);
 		if (recorder_.getState() != AudioRecord.STATE_INITIALIZED) {
 			ShowError("Can't initialize AudioRecord");
 			return;
 		}
-		short[] audio_data = new short[BUFFER_SIZE_IN_BYTES / 2];
-		double[] data = new double[BUFFER_SIZE_IN_BYTES];
+
+		short[] audio_data = new short[BUFFER_SIZE_IN_BYTES];
+		double[] data = new double[CHUNK_SIZE_IN_SAMPLES * 2];
+
 		final int min_frequency_fft = Math.round(MIN_FREQUENCY
 				* CHUNK_SIZE_IN_SAMPLES / RATE);
 		final int max_frequency_fft = Math.round(MAX_FREQUENCY
 				* CHUNK_SIZE_IN_SAMPLES / RATE);
 		while (!Thread.interrupted()) {
 			recorder_.startRecording();
-			recorder_.read(audio_data, 0, BUFFER_SIZE_IN_BYTES / 2);
+			recorder_.read(audio_data, 0, BUFFER_SIZE_IN_BYTES);
 			recorder_.stop();
-			for (int i = 0; i < BUFFER_SIZE_IN_BYTES ; i++) {
+			for (int i = 0; i < CHUNK_SIZE_IN_SAMPLES ; i++) {
 				data[i*2] = new Short(audio_data[i]).doubleValue();
 				data[i*2+1] = 0.0;
 			}
-			fprocess(data, CHUNK_SIZE_IN_SAMPLES * 2);
+			fprocess(data, CHUNK_SIZE_IN_SAMPLES);
 			double best_frequency = min_frequency_fft;
 			double best_amplitude = 0;
 			HashMap<Double, Double> frequencies = new HashMap<Double, Double>();
@@ -122,9 +123,6 @@ public class PitchDetect implements Runnable {
 	
 	private void SelectSamplingFrequency()
 	{
-		
-		
-
 		// add the rates you wish to check against
 		int i = 0;
 		while (BUFFER_SIZE_IN_BYTES < 0 && i < rates.length) {
@@ -134,19 +132,21 @@ public class PitchDetect implements Runnable {
 
 		}
 		RATE = rates[i];
-		CHUNK_SIZE_IN_SAMPLES = (int) Math.round(RATE * 0.8);
+		CHUNK_SIZE_IN_SAMPLES = (int) Math.round(RATE * 0.15);
+		
+		if((CHUNK_SIZE_IN_SAMPLES % 2) !=0)
+		{CHUNK_SIZE_IN_SAMPLES+=1;} //must be power of 2
+		
+		
 		
 		CHUNK_SIZE_IN_MS = CHUNK_SIZE_IN_SAMPLES * 1000 /RATE;
-		CHUNK_SIZE_IN_BYTES = RATE * CHUNK_SIZE_IN_MS/ 1000 * 2;
+		CHUNK_SIZE_IN_BYTES = CHUNK_SIZE_IN_SAMPLES *2;
 		
 
 		Log.i(AUDIO_SERVICE,
 				"buffersize will be :" + String.valueOf(BUFFER_SIZE_IN_BYTES)
+				+ "\n window size is " + String.valueOf(CHUNK_SIZE_IN_SAMPLES)
 						+ "\n sample rate is " + String.valueOf(RATE));
-		
-		
-		
-		
 	}
 
 	private void PostToUI(
