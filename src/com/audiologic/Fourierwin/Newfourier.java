@@ -235,6 +235,7 @@ public class Newfourier extends Activity {
 		Button button = (Button) findViewById(R.id.button1);
 		button.setText("get Pitch");
 		
+		
 	}
 
 	
@@ -256,7 +257,7 @@ public class Newfourier extends Activity {
 	public void ShowPitchDetectionResult(
 			final HashMap<Double, Double> frequencies,
 			final double pitch) {
-		tv_.setDetectionResults(frequencies, pitch);
+		setPitch(String.valueOf(pitch));
 	}
 	
 	public void setPitch(String fg)
