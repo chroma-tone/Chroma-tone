@@ -223,5 +223,6 @@ void Java_com_audiologic_Fourierwin_PitchDetect_fprocess(
             jint size) {
   jdouble *source_data = env->GetDoubleArrayElements(data, JNI_FALSE);
   DoFFTInternal(source_data, size);
+  env->ReleaseDoubleArrayElements(data, source_data, 0);
 }
 
