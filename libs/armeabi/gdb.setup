@@ -1,2 +1,0 @@
-set solib-search-path ./obj/local/armeabi
-directory /Users/lukestanford/android-ndk/platforms/android-14/arch-arm/usr/include jni/fftw3/include /Users/lukestanford/android-ndk/sources/cxx-stl/system/include
